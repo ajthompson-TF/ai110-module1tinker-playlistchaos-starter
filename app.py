@@ -194,26 +194,53 @@ def profile_sidebar():
         value=str(profile.get("name", "")),
     )
 
-    col1, col2 = st.sidebar.columns(2)
-    with col1:
-        profile["hype_min_energy"] = st.sidebar.slider(
-            "Hype min energy",
-            min_value=1,
-            max_value=10,
-            value=int(profile.get("hype_min_energy", 7)),
+    profile["hype_min_energy"] = st.sidebar.slider(
+        "Hype: energy at or above",
+        min_value=1,
+        max_value=10,
+        value=int(profile.get("hype_min_energy", 7)),
+        help=(
+            "Songs with energy at or above this value are sorted into Hype. "
+            "Lower it and more songs become Hype; raise it for fewer."
+        ),
+    )
+    profile["chill_max_energy"] = st.sidebar.slider(
+        "Chill: energy at or below",
+        min_value=1,
+        max_value=10,
+        value=int(profile.get("chill_max_energy", 3)),
+        help=(
+            "Songs with energy at or below this value are sorted into Chill. "
+            "Anything between the two thresholds becomes Mixed."
+        ),
+    )
+
+    hype_min = int(profile["hype_min_energy"])
+    chill_max = int(profile["chill_max_energy"])
+    if chill_max >= hype_min:
+        st.sidebar.warning(
+            "Chill threshold overlaps the Hype threshold — there's no room left "
+            "for Mixed, and high-energy songs win ties as Hype."
         )
-    with col2:
-        profile["chill_max_energy"] = st.sidebar.slider(
-            "Chill max energy",
-            min_value=1,
-            max_value=10,
-            value=int(profile.get("chill_max_energy", 3)),
+    else:
+        st.sidebar.caption(
+            f"Energy 1–{chill_max} → Chill · "
+            f"{chill_max + 1}–{hype_min - 1} → Mixed · "
+            f"{hype_min}–10 → Hype"
         )
 
+    genre_options = ["rock", "lofi", "pop", "jazz", "electronic", "ambient", "other"]
+    current_genre = str(profile.get("favorite_genre", "rock"))
+    genre_index = (
+        genre_options.index(current_genre)
+        if current_genre in genre_options
+        else genre_options.index("other")
+    )
     profile["favorite_genre"] = st.sidebar.selectbox(
         "Favorite genre",
-        options=["rock", "lofi", "pop", "jazz", "electronic", "ambient", "other"],
-        index=0,
+        options=genre_options,
+        index=genre_index,
+        help="Songs in this genre are always sorted into Hype, no matter their energy.",
     )
 
     profile["include_mixed"] = st.sidebar.checkbox(
